@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: mupay-mysql
+    ports:
+      - "3315:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: mupay_root_123
+      MYSQL_DATABASE: mupay
+      MYSQL_USER: mupay
+      MYSQL_PASSWORD: mupay_123
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init.sql
+    command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+    networks:
+      - mupay-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: mupay-redis
+    ports:
+      - "6386:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      timeout: 5s
+      retries: 5
+    networks:
+      - mupay-network
+
+volumes:
+  mysql_data:
+  redis_data:
+
+networks:
+  mupay-network:
+    driver: bridge
