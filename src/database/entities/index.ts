@@ -16,3 +16,8 @@ export * from './bank.entity';
 export * from './exchange-rate.entity';
 export * from './mobile-operator.entity';
 export * from './contact.entity';
+export * from './deposit-order.entity';
+export * from './deposit-address.entity';
+export * from './deposit-limit.entity';
+export * from './deposit-audit-log.entity';
+export * from './user-notification.entity';

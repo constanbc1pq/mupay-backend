@@ -37,6 +37,9 @@ export class User {
   @Column({ type: 'tinyint', default: 0, comment: 'KYC等级: 0-未认证, 1-基础认证, 2-高级认证' })
   kycLevel: number;
 
+  @Column({ type: 'tinyint', default: 0, comment: 'VIP等级: 0-普通用户, 1-VIP1, 2-VIP2, ...' })
+  vipLevel: number;
+
   @Column({ default: false })
   isAgent: boolean;
 

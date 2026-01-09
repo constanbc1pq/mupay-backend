@@ -7,6 +7,9 @@ import { getDatabaseConfig } from './config/database.config';
 import { RedisModule } from './config/redis.module';
 import { RedisService } from './config/redis.service';
 import { EmailModule } from './config/email.module';
+import { BlockchainModule } from './services/blockchain/blockchain.module';
+import { PaymentModule } from './services/payment/payment.module';
+import { NotificationModule } from './services/notification/notification.module';
 
 // Modules
 import { AuthModule } from './modules/auth/auth.module';
@@ -18,6 +21,7 @@ import { RemittanceModule } from './modules/remittance/remittance.module';
 import { TransferModule } from './modules/transfer/transfer.module';
 import { TopupModule } from './modules/topup/topup.module';
 import { AgentModule } from './modules/agent/agent.module';
+import { DepositModule } from './modules/deposit/deposit.module';
 
 @Module({
   imports: [
@@ -40,6 +44,15 @@ import { AgentModule } from './modules/agent/agent.module';
     // Email
     EmailModule,
 
+    // Blockchain (HD Wallet)
+    BlockchainModule,
+
+    // Payment (Stripe, PayPal)
+    PaymentModule,
+
+    // Notification & Audit
+    NotificationModule,
+
     // Rate limiting
     ThrottlerModule.forRoot([
       {
@@ -58,6 +71,7 @@ import { AgentModule } from './modules/agent/agent.module';
     TransferModule,
     TopupModule,
     AgentModule,
+    DepositModule,
   ],
 })
 export class AppModule implements OnModuleInit {

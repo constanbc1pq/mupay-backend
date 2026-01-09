@@ -4,12 +4,18 @@ import { PassportModule } from '@nestjs/passport';
 import { ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AdminController } from './admin.controller';
+import { AdminDepositController } from './admin-deposit.controller';
 import { AdminService } from './admin.service';
+import { AdminDepositService } from './admin-deposit.service';
 import { AdminJwtStrategy } from './strategies/admin-jwt.strategy';
 import { AdminUser } from '@database/entities/admin-user.entity';
 import { User } from '@database/entities/user.entity';
 import { Transaction } from '@database/entities/transaction.entity';
 import { Agent } from '@database/entities/agent.entity';
+import { DepositOrder } from '@database/entities/deposit-order.entity';
+import { DepositAddress } from '@database/entities/deposit-address.entity';
+import { DepositAuditLog } from '@database/entities/deposit-audit-log.entity';
+import { Wallet } from '@database/entities/wallet.entity';
 
 @Module({
   imports: [
@@ -23,10 +29,19 @@ import { Agent } from '@database/entities/agent.entity';
         },
       }),
     }),
-    TypeOrmModule.forFeature([AdminUser, User, Transaction, Agent]),
+    TypeOrmModule.forFeature([
+      AdminUser,
+      User,
+      Transaction,
+      Agent,
+      DepositOrder,
+      DepositAddress,
+      DepositAuditLog,
+      Wallet,
+    ]),
   ],
-  controllers: [AdminController],
-  providers: [AdminService, AdminJwtStrategy],
+  controllers: [AdminController, AdminDepositController],
+  providers: [AdminService, AdminDepositService, AdminJwtStrategy],
   exports: [AdminService],
 })
 export class AdminModule {}

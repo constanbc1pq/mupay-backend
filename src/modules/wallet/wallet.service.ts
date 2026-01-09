@@ -1,9 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { v4 as uuidv4 } from 'uuid';
+import { Repository, DataSource } from 'typeorm';
 import { Wallet } from '@database/entities/wallet.entity';
 import { Transaction } from '@database/entities/transaction.entity';
+import { DepositAddress, NetworkType } from '@database/entities/deposit-address.entity';
+import { HdWalletService } from '@services/blockchain/hd-wallet.service';
 import { MSG } from '@common/constants/messages';
 import { PaginationQueryDto, PaginatedResponse } from '@common/dto/api-response.dto';
 
@@ -14,6 +15,10 @@ export class WalletService {
     private walletRepository: Repository<Wallet>,
     @InjectRepository(Transaction)
     private transactionRepository: Repository<Transaction>,
+    @InjectRepository(DepositAddress)
+    private depositAddressRepository: Repository<DepositAddress>,
+    private hdWalletService: HdWalletService,
+    private dataSource: DataSource,
   ) {}
 
   async getBalance(userId: string) {
@@ -92,17 +97,54 @@ export class WalletService {
   }
 
   async createWallet(userId: string): Promise<Wallet> {
-    // Generate mock deposit addresses
-    const wallet = this.walletRepository.create({
-      userId,
-      balance: 0,
-      frozenBalance: 0,
-      depositAddressTRC20: `T${this.generateMockAddress()}`,
-      depositAddressERC20: `0x${this.generateMockAddress()}`,
-      depositAddressBEP20: `0x${this.generateMockAddress()}`,
-    });
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
 
-    return this.walletRepository.save(wallet);
+    try {
+      // Get the next derivation index
+      const maxIndexResult = await queryRunner.manager
+        .createQueryBuilder(DepositAddress, 'da')
+        .select('MAX(da.derivationIndex)', 'maxIndex')
+        .getRawOne();
+      const nextIndex = (maxIndexResult?.maxIndex ?? -1) + 1;
+
+      // Derive addresses using HD Wallet
+      const derivedAddresses = await this.hdWalletService.deriveAllAddresses(nextIndex);
+
+      // Create wallet with derived addresses
+      const wallet = queryRunner.manager.create(Wallet, {
+        userId,
+        balance: 0,
+        frozenBalance: 0,
+        depositAddressTRC20: derivedAddresses.find((a) => a.network === 'TRC20')?.address,
+        depositAddressERC20: derivedAddresses.find((a) => a.network === 'ERC20')?.address,
+        depositAddressBEP20: derivedAddresses.find((a) => a.network === 'BEP20')?.address,
+      });
+
+      const savedWallet = await queryRunner.manager.save(wallet);
+
+      // Create deposit address records
+      for (const addr of derivedAddresses) {
+        const depositAddress = queryRunner.manager.create(DepositAddress, {
+          userId,
+          network: addr.network as NetworkType,
+          address: addr.address,
+          derivationIndex: nextIndex,
+          derivationPath: addr.derivationPath,
+          isActive: true,
+        });
+        await queryRunner.manager.save(depositAddress);
+      }
+
+      await queryRunner.commitTransaction();
+      return savedWallet;
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      await queryRunner.release();
+    }
   }
 
   async getWalletByUserId(userId: string): Promise<Wallet> {
@@ -119,7 +161,18 @@ export class WalletService {
     await this.walletRepository.save(wallet);
   }
 
-  private generateMockAddress(): string {
-    return uuidv4().replace(/-/g, '').substring(0, 32);
+  async getDepositAddresses(userId: string): Promise<DepositAddress[]> {
+    return this.depositAddressRepository.find({
+      where: { userId, isActive: true },
+    });
+  }
+
+  async getDepositAddressByAddress(
+    address: string,
+    network: NetworkType,
+  ): Promise<DepositAddress | null> {
+    return this.depositAddressRepository.findOne({
+      where: { address, network, isActive: true },
+    });
   }
 }

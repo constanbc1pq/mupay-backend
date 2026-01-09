@@ -339,3 +339,117 @@
   - [x] transfer 模块消息替换
   - [x] topup 模块消息替换
   - [x] agent 模块消息替换
+
+## Phase 12: 加密货币充值系统 (测试环境 HD Wallet)
+
+> 说明: 测试阶段使用 HD Wallet 为每用户派生独立地址，生产环境将接入第三方托管服务 (Fireblocks/Circle)
+
+- [x] HD 钱包服务
+  - [x] 安装 ethers.js tronweb 依赖
+  - [x] 创建 services/blockchain/blockchain.module.ts
+  - [x] 创建 services/blockchain/hd-wallet.service.ts
+  - [x] 配置测试用主种子 (环境变量 HD_WALLET_MNEMONIC)
+  - [x] 实现 ERC20/BEP20 地址派生 (BIP44 m/44'/60'/0'/0/index)
+  - [x] 实现 TRC20 地址派生 (BIP44 m/44'/195'/0'/0/index)
+
+- [x] 充值地址管理
+  - [x] 创建 database/entities/deposit-address.entity.ts
+  - [x] 字段: id/userId/network/address/derivationIndex
+  - [x] 字段: isActive/totalReceived/createdAt
+  - [x] 改造 wallet.service.ts 调用 HD 钱包派生真实地址
+
+- [x] 充值订单实体
+  - [x] 创建 database/entities/deposit-order.entity.ts
+  - [x] 字段: id/userId/orderNo/method (CRYPTO/CARD/PAYPAL)
+  - [x] 字段: network/txHash/fromAddress/toAddress/blockNumber/confirmations
+  - [x] 字段: amount/fee/netAmount/currency/status
+  - [x] 字段: createdAt/confirmedAt/completedAt
+
+- [x] 区块链监控服务 (轮询模式)
+  - [x] 创建 services/blockchain/monitor.service.ts
+  - [x] 配置 RPC 节点地址 (Infura/Alchemy/TronGrid)
+  - [x] 实现 ERC20 USDT 余额轮询检查
+  - [x] 实现 BEP20 USDT 余额轮询检查
+  - [x] 实现 TRC20 USDT 余额轮询检查
+  - [x] 实现新充值检测逻辑
+
+- [x] 定时任务配置
+  - [x] 安装 @nestjs/schedule 依赖
+  - [x] 创建 jobs/deposit.job.ts 充值检测与确认任务
+  - [x] 实现区块确认数检查 (TRC20:20/ERC20:12/BEP20:15)
+
+- [x] 充值到账处理
+  - [x] 实现充值订单状态更新
+  - [x] 实现用户余额增加 (事务处理)
+  - [x] 实现充值交易记录创建
+
+- [x] 测试用资金归集 (简化版)
+  - [x] 创建 services/blockchain/sweep.service.ts
+  - [x] 实现单地址归集功能
+  - [ ] 创建 Admin 手动归集接口 POST /api/admin/sweep
+
+## Phase 13: 银行卡充值系统 (Stripe)
+
+> **跳过** - 正式环境将使用 Cobo/FireBlock 托管服务，测试阶段仅保留链上充值
+
+## Phase 14: PayPal 充值系统
+
+> **跳过** - 正式环境将使用 Cobo/FireBlock 托管服务，测试阶段仅保留链上充值
+
+## Phase 15: 充值模块统一管理
+
+- [x] 充值模块重构
+  - [x] 创建 modules/deposit/deposit.module.ts
+  - [x] 创建 modules/deposit/deposit.controller.ts
+  - [x] 创建 modules/deposit/deposit.service.ts
+  - [x] 链上充值 (CRYPTO) 功能
+
+- [x] 统一充值接口
+  - [x] GET /api/deposit/orders 充值订单列表
+  - [x] GET /api/deposit/orders/:id 订单详情
+  - [x] GET /api/deposit/methods 可用充值方式及配置
+
+- [x] 充值限额配置
+  - [x] 创建 database/entities/deposit-limit.entity.ts
+  - [x] 字段: method/network/scope/minAmount/maxAmount/dailyLimit/weeklyLimit/monthlyLimit
+  - [x] 创建 modules/deposit/deposit-limit.service.ts 限额管理服务
+  - [x] GET /api/deposit/limits 获取用户限额信息
+  - [ ] Admin 接口: 限额配置管理
+
+- [x] 订单过期处理
+  - [x] 更新 jobs/deposit.job.ts 添加过期处理任务
+  - [x] 实现待支付订单超时取消 (30分钟)
+  - [x] POST /api/deposit/orders/:id/cancel 取消订单接口
+  - [ ] 实现异常订单告警
+
+## Phase 16: 充值通知与审计
+
+- [x] 充值通知服务
+  - [x] 创建 services/notification/deposit-notification.service.ts
+  - [x] 创建 database/entities/user-notification.entity.ts 站内信实体
+  - [x] 实现充值成功通知 (站内信)
+  - [x] 实现充值成功通知 (邮件)
+  - [x] 实现充值失败通知
+  - [x] 用户通知接口
+    - [x] GET /api/user/notifications 通知列表
+    - [x] GET /api/user/notifications/unread-count 未读数量
+    - [x] POST /api/user/notifications/:id/read 标记已读
+    - [x] POST /api/user/notifications/read-all 全部已读
+
+- [x] 审计日志
+  - [x] 创建 database/entities/deposit-audit-log.entity.ts
+  - [x] 创建 services/notification/deposit-audit.service.ts
+  - [x] 记录所有充值状态变更
+  - [x] 记录归集操作日志
+  - [x] 集成到 deposit.service.ts
+
+- [x] Admin 充值管理
+  - [x] 创建 modules/admin/admin-deposit.controller.ts
+  - [x] 创建 modules/admin/admin-deposit.service.ts
+  - [x] GET /api/admin/deposits 充值订单列表
+  - [x] GET /api/admin/deposits/:id 订单详情
+  - [x] POST /api/admin/deposits/:id/manual-confirm 人工确认
+  - [x] GET /api/admin/deposits/stats 充值统计
+  - [x] GET /api/admin/hot-wallet/balance 热钱包余额
+  - [x] GET /api/admin/deposits/audit-logs 审计日志列表
+  - [x] GET /api/admin/deposits/addresses 充值地址列表

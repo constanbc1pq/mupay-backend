@@ -11,12 +11,12 @@ export async function seedConfigData(dataSource: DataSource) {
 
   if (existingCountries === 0) {
     const countries = [
-      { code: 'CN', name: '中国大陆', flag: '🇨🇳', currency: 'CNY', sortOrder: 1 },
-      { code: 'HK', name: '中国香港', flag: '🇭🇰', currency: 'HKD', sortOrder: 2 },
-      { code: 'US', name: '美国', flag: '🇺🇸', currency: 'USD', sortOrder: 3 },
-      { code: 'JP', name: '日本', flag: '🇯🇵', currency: 'JPY', sortOrder: 4 },
-      { code: 'SG', name: '新加坡', flag: '🇸🇬', currency: 'SGD', sortOrder: 5 },
-      { code: 'TH', name: '泰国', flag: '🇹🇭', currency: 'THB', sortOrder: 6 },
+      { code: 'CN', name: 'China', flag: '🇨🇳', currency: 'CNY', sortOrder: 1 },
+      { code: 'HK', name: 'Hong Kong', flag: '🇭🇰', currency: 'HKD', sortOrder: 2 },
+      { code: 'US', name: 'United States', flag: '🇺🇸', currency: 'USD', sortOrder: 3 },
+      { code: 'JP', name: 'Japan', flag: '🇯🇵', currency: 'JPY', sortOrder: 4 },
+      { code: 'SG', name: 'Singapore', flag: '🇸🇬', currency: 'SGD', sortOrder: 5 },
+      { code: 'TH', name: 'Thailand', flag: '🇹🇭', currency: 'THB', sortOrder: 6 },
     ];
 
     await countryRepository.save(countries);
@@ -30,16 +30,16 @@ export async function seedConfigData(dataSource: DataSource) {
   if (existingBanks === 0) {
     const banks = [
       // China
-      { code: 'ICBC', name: '中国工商银行', countryCode: 'CN', sortOrder: 1 },
-      { code: 'CCB', name: '中国建设银行', countryCode: 'CN', sortOrder: 2 },
-      { code: 'ABC', name: '中国农业银行', countryCode: 'CN', sortOrder: 3 },
-      { code: 'BOC', name: '中国银行', countryCode: 'CN', sortOrder: 4 },
-      { code: 'CMB', name: '招商银行', countryCode: 'CN', sortOrder: 5 },
-      { code: 'CITIC', name: '中信银行', countryCode: 'CN', sortOrder: 6 },
+      { code: 'ICBC', name: 'Industrial and Commercial Bank of China', countryCode: 'CN', sortOrder: 1 },
+      { code: 'CCB', name: 'China Construction Bank', countryCode: 'CN', sortOrder: 2 },
+      { code: 'ABC', name: 'Agricultural Bank of China', countryCode: 'CN', sortOrder: 3 },
+      { code: 'BOC', name: 'Bank of China', countryCode: 'CN', sortOrder: 4 },
+      { code: 'CMB', name: 'China Merchants Bank', countryCode: 'CN', sortOrder: 5 },
+      { code: 'CITIC', name: 'CITIC Bank', countryCode: 'CN', sortOrder: 6 },
       // Hong Kong
-      { code: 'HSBC', name: '汇丰银行', countryCode: 'HK', sortOrder: 1 },
-      { code: 'SCB', name: '渣打银行', countryCode: 'HK', sortOrder: 2 },
-      { code: 'BOCHK', name: '中银香港', countryCode: 'HK', sortOrder: 3 },
+      { code: 'HSBC', name: 'HSBC', countryCode: 'HK', sortOrder: 1 },
+      { code: 'SCB', name: 'Standard Chartered', countryCode: 'HK', sortOrder: 2 },
+      { code: 'BOCHK', name: 'Bank of China (Hong Kong)', countryCode: 'HK', sortOrder: 3 },
     ];
 
     await bankRepository.save(banks);
@@ -70,9 +70,9 @@ export async function seedConfigData(dataSource: DataSource) {
 
   if (existingOperators === 0) {
     const operators = [
-      { code: 'CMCC', name: '中国移动', countryCode: 'CN' },
-      { code: 'CUCC', name: '中国联通', countryCode: 'CN' },
-      { code: 'CTCC', name: '中国电信', countryCode: 'CN' },
+      { code: 'CMCC', name: 'China Mobile', countryCode: 'CN' },
+      { code: 'CUCC', name: 'China Unicom', countryCode: 'CN' },
+      { code: 'CTCC', name: 'China Telecom', countryCode: 'CN' },
     ];
 
     await operatorRepository.save(operators);
