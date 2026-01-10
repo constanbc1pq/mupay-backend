@@ -63,6 +63,14 @@ export class AdminController {
     return this.adminService.getTransactions(query);
   }
 
+  @Get('transactions/:id')
+  @UseGuards(AdminAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: '交易详情' })
+  async getTransactionDetail(@Param('id') id: string) {
+    return this.adminService.getTransactionDetail(id);
+  }
+
   @Get('agents')
   @UseGuards(AdminAuthGuard)
   @ApiBearerAuth()

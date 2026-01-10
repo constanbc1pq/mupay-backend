@@ -8,10 +8,12 @@ import { AdminDepositController } from './admin-deposit.controller';
 import { AdminIssuingController } from './admin-issuing.controller';
 import { AdminKycController } from './admin-kyc.controller';
 import { AdminCardholderController } from './admin-cardholder.controller';
+import { AdminFinanceController } from './admin-finance.controller';
 import { AdminService } from './admin.service';
 import { AdminDepositService } from './admin-deposit.service';
 import { AdminIssuingService } from './admin-issuing.service';
 import { AdminCardholderService } from './admin-cardholder.service';
+import { AdminFinanceService } from './admin-finance.service';
 import { KycModule } from '../kyc/kyc.module';
 import { AdminJwtStrategy } from './strategies/admin-jwt.strategy';
 import { AdminUser } from '@database/entities/admin-user.entity';
@@ -29,6 +31,8 @@ import { Cardholder } from '@database/entities/cardholder.entity';
 import { KycRecord } from '@database/entities/kyc-record.entity';
 import { IssuingBalance } from '@database/entities/issuing-balance.entity';
 import { IssuingBalanceTransaction } from '@database/entities/issuing-balance-transaction.entity';
+import { UsdtWithdraw } from '@database/entities/usdt-withdraw.entity';
+import { Transfer } from '@database/entities/transfer.entity';
 
 @Module({
   imports: [
@@ -59,10 +63,12 @@ import { IssuingBalanceTransaction } from '@database/entities/issuing-balance-tr
       KycRecord,
       IssuingBalance,
       IssuingBalanceTransaction,
+      UsdtWithdraw,
+      Transfer,
     ]),
   ],
-  controllers: [AdminController, AdminDepositController, AdminIssuingController, AdminKycController, AdminCardholderController],
-  providers: [AdminService, AdminDepositService, AdminIssuingService, AdminCardholderService, AdminJwtStrategy],
+  controllers: [AdminController, AdminDepositController, AdminIssuingController, AdminKycController, AdminCardholderController, AdminFinanceController],
+  providers: [AdminService, AdminDepositService, AdminIssuingService, AdminCardholderService, AdminFinanceService, AdminJwtStrategy],
   exports: [AdminService],
 })
 export class AdminModule {}

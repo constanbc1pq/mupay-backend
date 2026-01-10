@@ -174,6 +174,32 @@ export class AdminService {
     return new PaginatedResponse(items, total, page, pageSize);
   }
 
+  async getTransactionDetail(id: string) {
+    const transaction = await this.transactionRepository.findOne({
+      where: { id },
+      relations: ['user'],
+    });
+
+    if (!transaction) {
+      throw new NotFoundException(MSG.NOT_FOUND);
+    }
+
+    return {
+      id: transaction.id,
+      userId: transaction.userId,
+      username: transaction.user?.username,
+      email: transaction.user?.email,
+      type: transaction.type,
+      amount: Number(transaction.amount),
+      fee: Number(transaction.fee),
+      status: transaction.status,
+      remark: transaction.remark,
+      relatedId: transaction.relatedId,
+      createdAt: transaction.createdAt,
+      completedAt: transaction.completedAt,
+    };
+  }
+
   async getAgents(query: PaginationQueryDto) {
     const { page = 1, pageSize = 10 } = query;
     const skip = (page - 1) * pageSize;
