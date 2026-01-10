@@ -49,6 +49,12 @@ export class User {
   @Column({ length: 100, nullable: true, unique: true, comment: 'Google账号ID' })
   googleId: string;
 
+  @Column({ length: 100, nullable: true, comment: '2FA密钥' })
+  twoFactorSecret: string;
+
+  @Column({ default: false, comment: '是否启用2FA' })
+  twoFactorEnabled: boolean;
+
   @Column({
     type: 'enum',
     enum: ['active', 'disabled', 'deleted'],

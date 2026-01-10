@@ -2,6 +2,8 @@ import { Module, OnModuleInit } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ThrottlerModule } from '@nestjs/throttler';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
 import configuration from './config/configuration';
 import { getDatabaseConfig } from './config/database.config';
 import { RedisModule } from './config/redis.module';
@@ -10,6 +12,7 @@ import { EmailModule } from './config/email.module';
 import { BlockchainModule } from './services/blockchain/blockchain.module';
 import { PaymentModule } from './services/payment/payment.module';
 import { NotificationModule } from './services/notification/notification.module';
+import { StorageModule } from './services/storage/storage.module';
 
 // Modules
 import { AuthModule } from './modules/auth/auth.module';
@@ -22,6 +25,11 @@ import { TransferModule } from './modules/transfer/transfer.module';
 import { TopupModule } from './modules/topup/topup.module';
 import { AgentModule } from './modules/agent/agent.module';
 import { DepositModule } from './modules/deposit/deposit.module';
+import { UploadModule } from './modules/upload/upload.module';
+import { KycModule } from './modules/kyc/kyc.module';
+import { SecurityModule } from './modules/security/security.module';
+import { SupportModule } from './modules/support/support.module';
+import { AccountModule } from './modules/account/account.module';
 
 @Module({
   imports: [
@@ -61,6 +69,18 @@ import { DepositModule } from './modules/deposit/deposit.module';
       },
     ]),
 
+    // Static file serving for uploads
+    ServeStaticModule.forRoot({
+      rootPath: join(process.cwd(), 'uploads'),
+      serveRoot: '/uploads',
+      serveStaticOptions: {
+        index: false,
+      },
+    }),
+
+    // Storage
+    StorageModule,
+
     // Business modules
     AuthModule,
     AdminModule,
@@ -72,6 +92,11 @@ import { DepositModule } from './modules/deposit/deposit.module';
     TopupModule,
     AgentModule,
     DepositModule,
+    UploadModule,
+    KycModule,
+    SecurityModule,
+    SupportModule,
+    AccountModule,
   ],
 })
 export class AppModule implements OnModuleInit {

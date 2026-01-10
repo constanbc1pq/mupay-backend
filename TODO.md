@@ -453,3 +453,182 @@
   - [x] GET /api/admin/hot-wallet/balance 热钱包余额
   - [x] GET /api/admin/deposits/audit-logs 审计日志列表
   - [x] GET /api/admin/deposits/addresses 充值地址列表
+
+## Phase 17: 文件上传服务
+
+> 说明: 测试阶段上传至服务器本地存储，预留 AWS S3 接口
+
+- [x] 文件存储服务
+  - [x] 创建 services/storage/storage.module.ts
+  - [x] 创建 services/storage/local-storage.service.ts 本地存储实现
+  - [x] 创建 services/storage/s3-storage.service.ts AWS S3 实现 (预留)
+  - [x] 创建 StorageProvider 接口抽象
+  - [x] 配置 STORAGE_PROVIDER 环境变量切换
+
+- [x] 文件上传接口
+  - [x] POST /api/upload/image 通用图片上传
+  - [x] POST /api/upload/avatar 头像上传 (含裁剪/压缩)
+  - [x] POST /api/upload/kyc 证件照上传 (加密存储)
+  - [x] 文件大小限制 (图片 5MB)
+  - [x] 文件类型校验 (jpg/png/webp)
+
+- [x] 静态文件服务
+  - [x] 配置 /uploads 静态文件访问路径
+  - [x] 配置文件访问权限控制
+
+## Phase 18: 个人资料扩展
+
+- [x] 用户实体扩展
+  - [x] User 实体添加 avatar 字段
+  - [x] User 实体添加 emailVerified 字段
+
+- [x] 头像上传接口
+  - [x] POST /api/upload/avatar 上传头像
+  - [x] 自动压缩至 200x200
+  - [x] 返回头像 URL
+
+- [x] 邮箱绑定/更换
+  - [x] POST /api/user/email/bindCode 发送绑定验证码
+  - [x] POST /api/user/email/bind 确认绑定邮箱
+  - [x] POST /api/user/email/changeCode 发送更换验证码 (发送到新邮箱)
+  - [x] POST /api/user/email/change 确认更换邮箱
+  - [x] 测试阶段: 验证码在控制台输出
+
+- [x] 邮件服务
+  - [x] 创建 config/email.module.ts
+  - [x] 创建 config/email.service.ts 邮件服务实现
+  - [x] 测试阶段控制台输出验证码
+
+## Phase 19: KYC 身份认证模块
+
+> 说明: 测试阶段 OCR/人脸识别直接通过，预留 AWS Rekognition 接口
+
+- [x] KYC 实体
+  - [x] 创建 database/entities/kyc-record.entity.ts
+  - [x] 字段: id/userId/level/realName/idType/idNumber
+  - [x] 字段: idFrontUrl/idBackUrl/holdingIdUrl/faceVerified
+  - [x] 字段: status/rejectReason/reviewedBy/reviewedAt
+  - [x] 字段: createdAt/updatedAt
+
+- [x] KYC 模块
+  - [x] 创建 modules/kyc/kyc.module.ts
+  - [x] 创建 modules/kyc/kyc.controller.ts
+  - [x] 创建 modules/kyc/kyc.service.ts
+
+- [x] KYC 接口
+  - [x] GET /api/kyc/status 获取认证状态
+  - [x] POST /api/kyc/basic 提交初级认证 (姓名+证件号)
+  - [x] POST /api/kyc/advanced/upload 上传证件照片
+  - [x] POST /api/kyc/advanced/face 人脸识别验证
+  - [x] GET /api/kyc/records 认证记录
+
+- [x] OCR 服务 (预留)
+  - [x] 测试环境直接通过 (在 kyc.service.ts 中实现)
+  - [ ] 创建 services/ocr/aws-ocr.service.ts AWS Textract 实现 (生产环境)
+
+- [x] 人脸识别服务 (预留)
+  - [x] 测试环境直接通过 (在 kyc.service.ts 中实现)
+  - [ ] 创建 services/face/aws-face.service.ts AWS Rekognition 实现 (生产环境)
+
+- [x] KYC 限额关联
+  - [x] 更新 deposit-limit.service.ts 根据 KYC 等级返回限额
+  - [x] Level 0: 单笔 $100, 日 $100
+  - [x] Level 1: 单笔 $1,000, 日 $5,000
+  - [x] Level 2: 单笔 $10,000, 日 $50,000
+
+- [x] Admin KYC 审核
+  - [x] GET /api/admin/kyc/pending 待审核列表
+  - [x] GET /api/admin/kyc/:id 认证详情
+  - [x] POST /api/admin/kyc/:id/approve 通过认证
+  - [x] POST /api/admin/kyc/:id/reject 拒绝认证
+
+## Phase 20: 安全中心扩展
+
+- [x] 登录密码修改
+  - [x] PATCH /api/user/password 修改登录密码
+  - [x] 验证原密码
+  - [x] 密码强度校验
+
+- [x] 支付密码重置
+  - [x] POST /api/user/payment-password/resetCode 发送重置验证码
+  - [x] POST /api/user/payment-password/reset 重置支付密码 (邮箱验证)
+
+- [x] 双因素认证 (2FA)
+  - [x] User 实体添加 twoFactorSecret/twoFactorEnabled 字段
+  - [x] 使用 crypto 模块实现 TOTP (无需 otplib)
+  - [x] POST /api/security/2fa/generate 生成 2FA 密钥和二维码
+  - [x] POST /api/security/2fa/enable 启用 2FA (需验证 TOTP)
+  - [x] POST /api/security/2fa/disable 禁用 2FA (需验证 TOTP)
+  - [x] POST /api/security/2fa/verify 验证 TOTP 码
+  - [x] 登录流程集成 2FA 验证
+
+- [x] 设备管理实体
+  - [x] 创建 database/entities/user-device.entity.ts
+  - [x] 字段: id/userId/deviceId/deviceName/deviceType/os
+  - [x] 字段: ip/location/lastActiveAt/createdAt
+
+- [x] 设备管理接口
+  - [x] GET /api/security/devices 获取设备列表
+  - [x] DELETE /api/security/devices/:id 移除设备
+  - [x] 登录时自动记录设备信息
+
+- [x] 登录历史实体
+  - [x] 创建 database/entities/login-history.entity.ts
+  - [x] 字段: id/userId/ip/device/location/status/createdAt
+
+- [x] 登录历史接口
+  - [x] GET /api/security/login-history 登录历史列表
+  - [x] 登录成功/失败时记录
+
+## Phase 21: 帮助与反馈模块
+
+- [x] FAQ 实体
+  - [x] 创建 database/entities/faq.entity.ts (含 FaqCategory 和 FaqItem)
+  - [x] 字段: id/categoryId/question/answer/sortOrder/viewCount
+
+- [x] 反馈实体
+  - [x] 创建 database/entities/feedback.entity.ts
+  - [x] 字段: id/userId/type/content/images/status/reply/createdAt
+
+- [x] 帮助模块
+  - [x] 创建 modules/support/support.module.ts
+  - [x] 创建 modules/support/support.controller.ts
+  - [x] 创建 modules/support/support.service.ts
+
+- [x] 帮助接口
+  - [x] GET /api/support/faq/categories FAQ 分类列表
+  - [x] GET /api/support/faq FAQ 列表
+  - [x] GET /api/support/faq/:id FAQ 详情
+  - [x] POST /api/support/feedback 提交反馈
+  - [x] GET /api/support/feedback 我的反馈列表
+
+- [x] FAQ 种子数据
+  - [x] 创建 database/seeds/faq.seed.ts
+  - [x] 添加常见问题 (充值/汇款/卡片/安全/KYC)
+
+- [x] Admin 反馈管理
+  - [x] GET /api/admin/feedback 反馈列表
+  - [x] GET /api/admin/feedback/:id 反馈详情
+  - [x] POST /api/admin/feedback/:id/reply 回复反馈
+
+## Phase 22: 账户注销
+
+- [x] 注销请求实体
+  - [x] 创建 database/entities/account-deletion.entity.ts
+  - [x] 字段: id/userId/status/reason/requestedAt/scheduledAt/cancelledAt
+
+- [x] 注销接口
+  - [x] GET /api/account/delete/check 检查注销条件
+  - [x] POST /api/account/delete/request 申请注销
+  - [x] POST /api/account/delete/cancel 撤销注销
+  - [x] GET /api/account/delete/status 注销状态
+
+- [x] 注销条件检查
+  - [x] 余额为零
+  - [x] 无进行中的订单 (冻结资金)
+  - [x] 无活动中的卡片
+
+- [x] 注销定时任务
+  - [x] 在 account.service.ts 中实现 @Cron 任务
+  - [x] 7天冷静期后执行删除
+  - [x] 用户数据匿名化处理
