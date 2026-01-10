@@ -11,9 +11,15 @@ import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { AdminAuthGuard } from '@common/guards/admin-auth.guard';
 import { CurrentAdmin } from '@common/decorators/current-admin.decorator';
 import { KycService } from '../kyc/kyc.service';
+import { PaginationQueryDto } from '@common/dto/api-response.dto';
 
 class RejectKycDto {
   rejectReason: string;
+}
+
+class KycQueryDto extends PaginationQueryDto {
+  status?: string;
+  search?: string;
 }
 
 @ApiTags('Admin KYC管理')
@@ -22,6 +28,12 @@ class RejectKycDto {
 @ApiBearerAuth()
 export class AdminKycController {
   constructor(private readonly kycService: KycService) {}
+
+  @Get()
+  @ApiOperation({ summary: 'KYC列表' })
+  async getKycList(@Query() query: KycQueryDto) {
+    return this.kycService.getKycList(query);
+  }
 
   @Get('pending')
   @ApiOperation({ summary: '待审核KYC列表' })

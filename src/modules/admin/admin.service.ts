@@ -7,6 +7,10 @@ import { AdminUser } from '@database/entities/admin-user.entity';
 import { User } from '@database/entities/user.entity';
 import { Transaction } from '@database/entities/transaction.entity';
 import { Agent } from '@database/entities/agent.entity';
+import { Wallet } from '@database/entities/wallet.entity';
+import { Card } from '@database/entities/card.entity';
+import { Cardholder } from '@database/entities/cardholder.entity';
+import { KycRecord } from '@database/entities/kyc-record.entity';
 import { MSG } from '@common/constants/messages';
 import { AdminLoginDto } from './dto/admin-login.dto';
 import { PaginationQueryDto, PaginatedResponse } from '@common/dto/api-response.dto';
@@ -22,6 +26,14 @@ export class AdminService {
     private transactionRepository: Repository<Transaction>,
     @InjectRepository(Agent)
     private agentRepository: Repository<Agent>,
+    @InjectRepository(Wallet)
+    private walletRepository: Repository<Wallet>,
+    @InjectRepository(Card)
+    private cardRepository: Repository<Card>,
+    @InjectRepository(Cardholder)
+    private cardholderRepository: Repository<Cardholder>,
+    @InjectRepository(KycRecord)
+    private kycRecordRepository: Repository<KycRecord>,
     private jwtService: JwtService,
   ) {}
 
@@ -79,14 +91,60 @@ export class AdminService {
   async getUserDetail(id: string) {
     const user = await this.userRepository.findOne({
       where: { id },
-      select: ['id', 'username', 'phone', 'email', 'nickname', 'avatar', 'kycLevel', 'isAgent', 'status', 'createdAt'],
+      select: ['id', 'username', 'phone', 'email', 'nickname', 'avatar', 'kycLevel', 'isAgent', 'status', 'createdAt', 'updatedAt'],
     });
 
     if (!user) {
       throw new NotFoundException(MSG.ADMIN_USER_NOT_FOUND);
     }
 
-    return user;
+    // Get wallet balance
+    const wallet = await this.walletRepository.findOne({ where: { userId: id } });
+    const walletBalance = wallet ? Number(wallet.balance) : 0;
+
+    // Get KYC status
+    const kycRecord = await this.kycRecordRepository.findOne({
+      where: { userId: id },
+      order: { createdAt: 'DESC' },
+    });
+    const kycStatus = kycRecord?.status || null;
+
+    // Get user's cards
+    const cards = await this.cardRepository.find({
+      where: { userId: id },
+      select: ['id', 'cardNumberLast4', 'cardNumber', 'status'],
+      order: { createdAt: 'DESC' },
+    });
+
+    // Get user's cardholders
+    const cardholders = await this.cardholderRepository.find({
+      where: { userId: id },
+      select: ['id', 'providerCardholderId', 'firstName', 'lastName', 'email', 'phone', 'country', 'status', 'createdAt', 'updatedAt'],
+      order: { createdAt: 'DESC' },
+    });
+
+    return {
+      ...user,
+      walletBalance,
+      kycStatus,
+      cards: cards.map(card => ({
+        id: card.id,
+        cardNumber: card.cardNumberLast4 ? `****${card.cardNumberLast4}` : card.cardNumber,
+        status: card.status,
+      })),
+      cardholders: cardholders.map(ch => ({
+        id: ch.id,
+        odooId: ch.providerCardholderId,
+        firstName: ch.firstName,
+        lastName: ch.lastName,
+        email: ch.email,
+        phone: ch.phone,
+        countryCode: ch.country,
+        status: ch.status,
+        createdAt: ch.createdAt,
+        updatedAt: ch.updatedAt,
+      })),
+    };
   }
 
   async updateUserStatus(id: string, status: string) {

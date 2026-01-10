@@ -57,7 +57,7 @@ export class User {
 
   @Column({
     type: 'enum',
-    enum: ['active', 'disabled', 'deleted'],
+    enum: ['active', 'inactive', 'suspended', 'disabled', 'deleted'],
     default: 'active',
   })
   status: string;

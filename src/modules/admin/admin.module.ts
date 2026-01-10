@@ -7,9 +7,11 @@ import { AdminController } from './admin.controller';
 import { AdminDepositController } from './admin-deposit.controller';
 import { AdminIssuingController } from './admin-issuing.controller';
 import { AdminKycController } from './admin-kyc.controller';
+import { AdminCardholderController } from './admin-cardholder.controller';
 import { AdminService } from './admin.service';
 import { AdminDepositService } from './admin-deposit.service';
 import { AdminIssuingService } from './admin-issuing.service';
+import { AdminCardholderService } from './admin-cardholder.service';
 import { KycModule } from '../kyc/kyc.module';
 import { AdminJwtStrategy } from './strategies/admin-jwt.strategy';
 import { AdminUser } from '@database/entities/admin-user.entity';
@@ -23,6 +25,8 @@ import { Wallet } from '@database/entities/wallet.entity';
 import { CardProvider } from '@database/entities/card-provider.entity';
 import { CardProduct } from '@database/entities/card-product.entity';
 import { Card } from '@database/entities/card.entity';
+import { Cardholder } from '@database/entities/cardholder.entity';
+import { KycRecord } from '@database/entities/kyc-record.entity';
 import { IssuingBalance } from '@database/entities/issuing-balance.entity';
 import { IssuingBalanceTransaction } from '@database/entities/issuing-balance-transaction.entity';
 
@@ -51,12 +55,14 @@ import { IssuingBalanceTransaction } from '@database/entities/issuing-balance-tr
       CardProvider,
       CardProduct,
       Card,
+      Cardholder,
+      KycRecord,
       IssuingBalance,
       IssuingBalanceTransaction,
     ]),
   ],
-  controllers: [AdminController, AdminDepositController, AdminIssuingController, AdminKycController],
-  providers: [AdminService, AdminDepositService, AdminIssuingService, AdminJwtStrategy],
+  controllers: [AdminController, AdminDepositController, AdminIssuingController, AdminKycController, AdminCardholderController],
+  providers: [AdminService, AdminDepositService, AdminIssuingService, AdminCardholderService, AdminJwtStrategy],
   exports: [AdminService],
 })
 export class AdminModule {}

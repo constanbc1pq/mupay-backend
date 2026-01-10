@@ -226,6 +226,50 @@ export class KycService {
 
   // ==================== Admin Methods ====================
 
+  async getKycList(query: { page?: number; pageSize?: number; status?: string; search?: string }) {
+    const { page = 1, pageSize = 10, status, search } = query;
+    const skip = (page - 1) * pageSize;
+
+    const queryBuilder = this.kycRepository
+      .createQueryBuilder('kyc')
+      .leftJoinAndSelect('kyc.user', 'user')
+      .orderBy('kyc.createdAt', 'DESC')
+      .skip(skip)
+      .take(pageSize);
+
+    if (status) {
+      queryBuilder.andWhere('kyc.status = :status', { status });
+    }
+
+    if (search) {
+      queryBuilder.andWhere(
+        '(user.username LIKE :search OR kyc.realName LIKE :search OR kyc.idNumber LIKE :search)',
+        { search: `%${search}%` },
+      );
+    }
+
+    const [records, total] = await queryBuilder.getManyAndCount();
+
+    return {
+      items: records.map(r => ({
+        id: r.id,
+        userId: r.userId,
+        username: r.user?.username,
+        level: r.level,
+        realName: r.realName,
+        idType: r.idType,
+        status: r.status,
+        rejectReason: r.rejectReason,
+        createdAt: r.createdAt,
+        reviewedAt: r.reviewedAt,
+      })),
+      total,
+      page,
+      pageSize,
+      totalPages: Math.ceil(total / pageSize),
+    };
+  }
+
   async getPendingList(page: number = 1, limit: number = 20) {
     const [records, total] = await this.kycRepository.findAndCount({
       where: { status: KycStatus.PENDING },
