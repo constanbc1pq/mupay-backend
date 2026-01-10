@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Like, Or } from 'typeorm';
+import { Repository, Like } from 'typeorm';
 import { Transfer, TransferStatus } from '@database/entities/transfer.entity';
 import { Contact } from '@database/entities/contact.entity';
 import { User } from '@database/entities/user.entity';
@@ -9,6 +9,7 @@ import { UserService } from '../user/user.service';
 import { WalletService } from '../wallet/wallet.service';
 import { PaginationQueryDto, PaginatedResponse } from '@common/dto/api-response.dto';
 import { CreateTransferDto } from './dto/create-transfer.dto';
+import { AddContactDto } from './dto/contact.dto';
 
 @Injectable()
 export class TransferService {
@@ -23,13 +24,22 @@ export class TransferService {
     private walletService: WalletService,
   ) {}
 
-  async getContacts(userId: string) {
-    const contacts = await this.contactRepository.find({
-      where: { userId },
-      relations: ['contactUser'],
-      order: { createdAt: 'DESC' },
-      take: 20,
-    });
+  async getContacts(userId: string, keyword?: string) {
+    const queryBuilder = this.contactRepository
+      .createQueryBuilder('contact')
+      .leftJoinAndSelect('contact.contactUser', 'contactUser')
+      .where('contact.userId = :userId', { userId });
+
+    if (keyword) {
+      queryBuilder.andWhere(
+        '(contact.remark LIKE :keyword OR contactUser.username LIKE :keyword OR contactUser.nickname LIKE :keyword)',
+        { keyword: `%${keyword}%` },
+      );
+    }
+
+    const contacts = await queryBuilder
+      .orderBy('contact.createdAt', 'DESC')
+      .getMany();
 
     return contacts.map((c) => ({
       id: c.id,
@@ -38,17 +48,137 @@ export class TransferService {
       nickname: c.contactUser?.nickname,
       avatar: c.contactUser?.avatar,
       remark: c.remark,
+      createdAt: c.createdAt,
     }));
   }
 
+  async addContact(userId: string, dto: AddContactDto) {
+    // Check if contact user exists
+    const contactUser = await this.userRepository.findOne({
+      where: { id: dto.contactUserId },
+    });
+
+    if (!contactUser) {
+      throw new NotFoundException(MSG.TRANSFER_USER_NOT_FOUND);
+    }
+
+    // Cannot add self as contact
+    if (userId === dto.contactUserId) {
+      throw new BadRequestException(MSG.TRANSFER_SELF_NOT_ALLOWED);
+    }
+
+    // Check if already a contact
+    const existing = await this.contactRepository.findOne({
+      where: { userId, contactUserId: dto.contactUserId },
+    });
+
+    if (existing) {
+      throw new BadRequestException(MSG.CONTACT_ALREADY_EXISTS); // Contact already exists
+    }
+
+    const contact = this.contactRepository.create({
+      userId,
+      contactUserId: dto.contactUserId,
+      remark: dto.remark,
+    });
+
+    const saved = await this.contactRepository.save(contact);
+
+    return {
+      id: saved.id,
+      userId: contactUser.id,
+      username: contactUser.username,
+      nickname: contactUser.nickname,
+      avatar: contactUser.avatar,
+      remark: saved.remark,
+      createdAt: saved.createdAt,
+    };
+  }
+
+  async updateContact(userId: string, contactId: string, remark: string) {
+    const contact = await this.contactRepository.findOne({
+      where: { id: contactId, userId },
+      relations: ['contactUser'],
+    });
+
+    if (!contact) {
+      throw new NotFoundException(MSG.CONTACT_NOT_FOUND); // Contact not found
+    }
+
+    contact.remark = remark;
+    await this.contactRepository.save(contact);
+
+    return {
+      id: contact.id,
+      userId: contact.contactUserId,
+      username: contact.contactUser?.username,
+      nickname: contact.contactUser?.nickname,
+      avatar: contact.contactUser?.avatar,
+      remark: contact.remark,
+      createdAt: contact.createdAt,
+    };
+  }
+
+  async deleteContact(userId: string, contactId: string) {
+    const contact = await this.contactRepository.findOne({
+      where: { id: contactId, userId },
+    });
+
+    if (!contact) {
+      throw new NotFoundException(MSG.CONTACT_NOT_FOUND); // Contact not found
+    }
+
+    await this.contactRepository.remove(contact);
+
+    return { success: true };
+  }
+
+  async getContactRecords(userId: string, contactId: string, query: PaginationQueryDto) {
+    // Get contact to find the contact user ID
+    const contact = await this.contactRepository.findOne({
+      where: { id: contactId, userId },
+    });
+
+    if (!contact) {
+      throw new NotFoundException(MSG.CONTACT_NOT_FOUND); // Contact not found
+    }
+
+    const contactUserId = contact.contactUserId;
+    const { page = 1, pageSize = 10 } = query;
+    const skip = (page - 1) * pageSize;
+
+    // Find transfers between current user and contact user
+    const [items, total] = await this.transferRepository.findAndCount({
+      where: [
+        { fromUserId: userId, toUserId: contactUserId },
+        { fromUserId: contactUserId, toUserId: userId },
+      ],
+      relations: ['fromUser', 'toUser'],
+      skip,
+      take: pageSize,
+      order: { createdAt: 'DESC' },
+    });
+
+    const records = items.map((t) => ({
+      id: t.id,
+      type: t.fromUserId === userId ? 'out' : 'in',
+      amount: t.amount,
+      remark: t.remark,
+      status: t.status,
+      createdAt: t.createdAt,
+    }));
+
+    return new PaginatedResponse(records, total, page, pageSize);
+  }
+
   async searchUser(keyword: string) {
+    // Search by username (MuPay ID) or email
     const users = await this.userRepository.find({
       where: [
         { username: Like(`%${keyword}%`) },
-        { phone: Like(`%${keyword}%`) },
-        { nickname: Like(`%${keyword}%`) },
+        { email: Like(`%${keyword}%`) },
       ],
-      select: ['id', 'username', 'nickname', 'avatar'],
+      select: ['id', 'username', 'email', 'nickname', 'avatar'],
       take: 10,
     });
 

@@ -15,6 +15,7 @@ import { OAuth2Client } from 'google-auth-library';
 import { User } from '@database/entities/user.entity';
 import { RedisService } from '@config/redis.service';
 import { EmailService } from '@config/email.service';
+import { NotificationService } from '@modules/notification/notification.service';
 import { MSG } from '@common/constants/messages';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
@@ -35,6 +36,7 @@ export class AuthService {
     private configService: ConfigService,
     private redisService: RedisService,
     private emailService: EmailService,
+    private notificationService: NotificationService,
   ) {
     const googleClientId = this.configService.get<string>('google.clientId');
     this.googleClient = new OAuth2Client(googleClientId);
@@ -85,7 +87,17 @@ export class AuthService {
       if (existingUser.emailVerified) {
         throw new ConflictException(MSG.AUTH_EMAIL_EXISTS);
       }
-      // User exists but not verified - resend verification email
+
+      // Dev environment: auto-verify existing unverified user
+      const isDev = this.configService.get('nodeEnv') === 'development';
+      if (isDev) {
+        this.logger.log(`[DEV] Auto-verifying existing user ${email}`);
+        existingUser.emailVerified = true;
+        await this.userRepository.save(existingUser);
+        return this.generateTokens(existingUser);
+      }
+
+      // Production: resend verification email
       await this.sendVerificationCode(email);
       return {
         messageId: MSG.AUTH_REGISTER_PENDING,
@@ -122,7 +134,25 @@ export class AuthService {
 
     await this.userRepository.save(user);
 
-    // Send verification email
+    // Dev environment: skip email verification, auto-login
+    const isDev = this.configService.get('nodeEnv') === 'development';
+    if (isDev) {
+      this.logger.log(`[DEV] Auto-verifying email for ${email}`);
+      user.emailVerified = true;
+      await this.userRepository.save(user);
+
+      // Send welcome message
+      try {
+        await this.notificationService.sendWelcomeMessage(user.id, user.nickname || user.username);
+      } catch (error) {
+        this.logger.error(`Failed to send welcome message`, error);
+      }
+
+      // Return tokens directly
+      return this.generateTokens(user);
+    }
+
+    // Production: send verification email
     await this.sendVerificationCode(email);
 
     return {
@@ -149,10 +179,11 @@ export class AuthService {
       throw new BadRequestException(MSG.AUTH_EMAIL_EXISTS);
     }
 
-    await this.sendVerificationCode(email);
+    const devCode = await this.sendVerificationCode(email);
 
     return {
       messageId: MSG.AUTH_VERIFY_EMAIL_SENT,
+      ...(devCode && { devCode }), // Only include in dev environment
     };
   }
 
@@ -188,6 +219,14 @@ export class AuthService {
 
     // Delete verification code from Redis
     await this.redisService.del(`verify:${email}`);
+
+    // Send welcome message to new user
+    try {
+      await this.notificationService.sendWelcomeMessage(user.id, user.nickname || user.username);
+      this.logger.log(`Welcome message sent to user ${user.id}`);
+    } catch (error) {
+      this.logger.error(`Failed to send welcome message to user ${user.id}`, error);
+    }
 
     // Return tokens for auto-login
     return this.generateTokens(user);
@@ -253,6 +292,14 @@ export class AuthService {
           password: await bcrypt.hash(uuidv4(), 10), // Random password for Google users
         });
         await this.userRepository.save(user);
+
+        // Send welcome message to new Google user
+        try {
+          await this.notificationService.sendWelcomeMessage(user.id, user.nickname || user.username);
+          this.logger.log(`Welcome message sent to Google user ${user.id}`);
+        } catch (error) {
+          this.logger.error(`Failed to send welcome message to Google user ${user.id}`, error);
+        }
       }
     }
 
@@ -294,8 +341,9 @@ export class AuthService {
 
   /**
    * Send verification code to email
+   * Returns the code in dev environment for testing
    */
-  private async sendVerificationCode(email: string): Promise<void> {
+  private async sendVerificationCode(email: string): Promise<string | null> {
     // Generate 6-digit code
     const code = Math.floor(100000 + Math.random() * 900000).toString();
 
@@ -308,6 +356,10 @@ export class AuthService {
 
     // Send email
     await this.emailService.sendVerificationEmail(email, code);
+
+    // Return code in dev environment for testing convenience
+    const isDev = this.configService.get('nodeEnv') === 'development';
+    return isDev ? code : null;
   }
 
   /**

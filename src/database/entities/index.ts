@@ -21,3 +21,4 @@ export * from './deposit-address.entity';
 export * from './deposit-limit.entity';
 export * from './deposit-audit-log.entity';
 export * from './user-notification.entity';
+export * from './message-template.entity';

@@ -109,8 +109,11 @@ export class WalletService {
         .getRawOne();
       const nextIndex = (maxIndexResult?.maxIndex ?? -1) + 1;
 
+      console.log(`Creating wallet for user ${userId} with derivation index ${nextIndex}`);
+
       // Derive addresses using HD Wallet
       const derivedAddresses = await this.hdWalletService.deriveAllAddresses(nextIndex);
+      console.log(`Derived addresses:`, derivedAddresses);
 
       // Create wallet with derived addresses
       const wallet = queryRunner.manager.create(Wallet, {

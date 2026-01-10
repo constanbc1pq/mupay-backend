@@ -1,6 +1,6 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { HDNodeWallet, Mnemonic, keccak256, getBytes, hexlify } from 'ethers';
+import { HDNodeWallet, Mnemonic, sha256, getBytes, hexlify } from 'ethers';
 
 export type NetworkType = 'TRC20' | 'ERC20' | 'BEP20';
 
@@ -71,9 +71,9 @@ export class HdWalletService implements OnModuleInit {
     // Remove '0x' and add '41' prefix (TRON mainnet prefix)
     const addressHex = '41' + ethAddress.slice(2).toLowerCase();
 
-    // Double SHA256 for checksum
-    const hash1 = keccak256(getBytes('0x' + addressHex));
-    const hash2 = keccak256(getBytes(hash1));
+    // Double SHA256 for checksum (TRON uses SHA256, not keccak256)
+    const hash1 = sha256(getBytes('0x' + addressHex));
+    const hash2 = sha256(getBytes(hash1));
     const checksum = hash2.slice(2, 10); // First 4 bytes
 
     // Append checksum
@@ -87,6 +87,9 @@ export class HdWalletService implements OnModuleInit {
    * BIP44 path: m/44'/60'/0'/0/{index}
    */
   deriveEthAddress(index: number): string {
+    if (!this.ethMasterNode) {
+      throw new Error('HD Wallet Service not initialized');
+    }
     const path = `m/44'/${this.ETH_COIN_TYPE}'/0'/0/${index}`;
     const childNode = this.ethMasterNode.derivePath(path);
     return childNode.address;

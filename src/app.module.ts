@@ -11,7 +11,8 @@ import { RedisService } from './config/redis.service';
 import { EmailModule } from './config/email.module';
 import { BlockchainModule } from './services/blockchain/blockchain.module';
 import { PaymentModule } from './services/payment/payment.module';
-import { NotificationModule } from './services/notification/notification.module';
+import { NotificationModule as DepositNotificationModule } from './services/notification/notification.module';
+import { NotificationModule } from './modules/notification/notification.module';
 import { StorageModule } from './services/storage/storage.module';
 
 // Modules
@@ -58,7 +59,10 @@ import { AccountModule } from './modules/account/account.module';
     // Payment (Stripe, PayPal)
     PaymentModule,
 
-    // Notification & Audit
+    // Deposit Notification & Audit (legacy)
+    DepositNotificationModule,
+
+    // Notification Module (new)
     NotificationModule,
 
     // Rate limiting

@@ -249,6 +249,13 @@
   - [x] POST /api/transfer 发起转账
   - [x] GET /api/transfer/records 转账记录
 
+- [ ] 联系人管理接口
+  - [ ] GET /api/transfer/contacts 联系人列表 (扩展: 支持分页、搜索)
+  - [ ] POST /api/transfer/contacts 添加联系人
+  - [ ] PATCH /api/transfer/contacts/:id 更新联系人备注
+  - [ ] DELETE /api/transfer/contacts/:id 删除联系人
+  - [ ] GET /api/transfer/contacts/:id/records 获取与该联系人的转账记录
+
 ## Phase 9: 话费充值模块
 
 - [x] MobileOperator 实体
@@ -632,3 +639,88 @@
   - [x] 在 account.service.ts 中实现 @Cron 任务
   - [x] 7天冷静期后执行删除
   - [x] 用户数据匿名化处理
+
+## Phase 23: 站内信系统
+
+> 说明: 基于现有 UserNotification 实体扩展，支持系统公告、交易通知、欢迎消息
+
+- [ ] 消息模板系统
+  - [ ] 创建 database/entities/message-template.entity.ts
+  - [ ] 字段: id/code/title/content/type/variables/status
+  - [ ] 字段: createdAt/updatedAt
+  - [ ] 类型: welcome/transaction/system/marketing
+
+- [ ] 系统公告实体
+  - [ ] 创建 database/entities/system-announcement.entity.ts
+  - [ ] 字段: id/title/content/type/priority
+  - [ ] 字段: startTime/endTime/targetUsers/status
+  - [ ] 字段: createdAt/updatedAt
+  - [ ] targetUsers 枚举: all/kyc_verified/agents
+
+- [ ] 公告已读记录实体
+  - [ ] 创建 database/entities/announcement-read.entity.ts
+  - [ ] 字段: id/userId/announcementId/readAt
+
+- [ ] UserNotification 实体扩展
+  - [ ] 添加 category 字段: transaction/system/marketing/welcome
+  - [ ] 添加 priority 字段: high/normal/low
+  - [ ] 添加 expireAt 字段 (可选过期时间)
+
+- [ ] 站内信模块重构
+  - [ ] 创建 modules/notification/notification.module.ts
+  - [ ] 创建 modules/notification/notification.controller.ts
+  - [ ] 创建 modules/notification/notification.service.ts
+  - [ ] 迁移 DepositNotificationService 功能到新模块
+
+- [ ] 站内信核心接口
+  - [ ] GET /api/notification/list 通知列表 (支持分类筛选)
+  - [ ] GET /api/notification/unread-count 未读数量
+  - [ ] POST /api/notification/:id/read 标记单条已读
+  - [ ] POST /api/notification/read-all 标记全部已读
+  - [ ] DELETE /api/notification/:id 删除通知
+
+- [ ] 系统公告接口
+  - [ ] GET /api/notification/announcements 有效公告列表
+  - [ ] POST /api/notification/announcements/:id/read 标记公告已读
+
+- [ ] 消息发送服务
+  - [ ] sendToUser(userId, templateCode, variables) 发送给单用户
+  - [ ] sendToUsers(userIds, templateCode, variables) 批量发送
+  - [ ] sendWelcomeMessage(userId, nickname) 发送欢迎消息
+
+- [ ] 新用户欢迎消息
+  - [ ] 在 AuthService.register() 成功后调用 sendWelcomeMessage
+  - [ ] 欢迎消息内容 (仅英文):
+    ```
+    Title: Welcome to MuPay!
+    Content:
+    Dear {{nickname}},
+
+    Welcome to MuPay - Your Cross-border Digital Finance Platform!
+
+    Here you can:
+    • Deposit USDT for secure digital asset management
+    • Apply for virtual cards for global online payments
+    • Send low-cost remittances to 170+ countries
+
+    Complete identity verification to unlock higher limits. Start exploring now!
+
+    The MuPay Team
+    ```
+
+- [ ] 消息模板种子数据
+  - [ ] 创建 database/seeds/message-template.seed.ts
+  - [ ] 添加欢迎消息模板 (WELCOME)
+  - [ ] 添加充值成功模板 (DEPOSIT_SUCCESS)
+  - [ ] 添加转账收款模板 (TRANSFER_RECEIVED)
+  - [ ] 添加 KYC 审核通过模板 (KYC_APPROVED)
+  - [ ] 添加 KYC 审核拒绝模板 (KYC_REJECTED)
+
+- [ ] Admin 站内信管理
+  - [ ] POST /api/admin/notification/send 发送站内信 (指定用户/全员)
+  - [ ] GET /api/admin/notification/templates 消息模板列表
+  - [ ] POST /api/admin/notification/templates 创建模板
+  - [ ] PATCH /api/admin/notification/templates/:id 更新模板
+  - [ ] POST /api/admin/announcements 创建系统公告
+  - [ ] GET /api/admin/announcements 公告列表
+  - [ ] PATCH /api/admin/announcements/:id 更新公告

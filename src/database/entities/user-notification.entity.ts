@@ -10,19 +10,28 @@ import {
 import { User } from './user.entity';
 
 export type NotificationType =
+  | 'WELCOME'
   | 'DEPOSIT_SUCCESS'
   | 'DEPOSIT_FAILED'
   | 'DEPOSIT_CONFIRMING'
   | 'WITHDRAW_SUCCESS'
   | 'WITHDRAW_FAILED'
   | 'TRANSFER_RECEIVED'
+  | 'TRANSFER_SENT'
   | 'CARD_APPLIED'
   | 'CARD_RECHARGED'
+  | 'KYC_APPROVED'
+  | 'KYC_REJECTED'
   | 'SYSTEM_NOTICE'
-  | 'AGENT_EARNING';
+  | 'AGENT_EARNING'
+  | 'MARKETING';
+
+export type NotificationCategory = 'welcome' | 'transaction' | 'system' | 'marketing';
+export type NotificationPriority = 'high' | 'normal' | 'low';
 
 @Entity('user_notifications')
 @Index(['userId', 'isRead', 'createdAt'])
+@Index(['userId', 'category', 'createdAt'])
 export class UserNotification {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -40,6 +49,22 @@ export class UserNotification {
     comment: '通知类型',
   })
   type: NotificationType;
+
+  @Column({
+    type: 'varchar',
+    length: 20,
+    default: 'system',
+    comment: '通知分类: welcome/transaction/system/marketing',
+  })
+  category: NotificationCategory;
+
+  @Column({
+    type: 'varchar',
+    length: 10,
+    default: 'normal',
+    comment: '优先级: high/normal/low',
+  })
+  priority: NotificationPriority;
 
   @Column({
     type: 'varchar',
@@ -90,6 +115,13 @@ export class UserNotification {
     comment: '阅读时间',
   })
   readAt: Date | null;
+
+  @Column({
+    type: 'timestamp',
+    nullable: true,
+    comment: '过期时间',
+  })
+  expireAt: Date | null;
 
   @CreateDateColumn()
   createdAt: Date;
