@@ -45,4 +45,16 @@ export default () => ({
     password: process.env.EMAIL_PASSWORD || '',
     from: process.env.EMAIL_FROM || 'MuPay <noreply@mupay.com>',
   },
+
+  // U卡服务商配置
+  cardProviders: {
+    uqpay: {
+      enabled: process.env.UQPAY_ENABLED === 'true',
+      apiBaseUrl: process.env.UQPAY_API_BASE_URL || 'https://api-sandbox.uqpaytech.com/api',
+      apiKey: process.env.UQPAY_API_KEY || '',
+      apiSecret: process.env.UQPAY_API_SECRET || '',
+      webhookSecret: process.env.UQPAY_WEBHOOK_SECRET || '',
+      timeout: parseInt(process.env.UQPAY_TIMEOUT || '30000', 10),
+    },
+  },
 });

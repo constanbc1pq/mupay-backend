@@ -11,6 +11,7 @@ import { RedisService } from './config/redis.service';
 import { EmailModule } from './config/email.module';
 import { BlockchainModule } from './services/blockchain/blockchain.module';
 import { PaymentModule } from './services/payment/payment.module';
+import { CardProviderModule } from './services/card-provider/card-provider.module';
 import { NotificationModule as DepositNotificationModule } from './services/notification/notification.module';
 import { NotificationModule } from './modules/notification/notification.module';
 import { StorageModule } from './services/storage/storage.module';
@@ -31,6 +32,7 @@ import { KycModule } from './modules/kyc/kyc.module';
 import { SecurityModule } from './modules/security/security.module';
 import { SupportModule } from './modules/support/support.module';
 import { AccountModule } from './modules/account/account.module';
+import { CardholderModule } from './modules/cardholder/cardholder.module';
 
 @Module({
   imports: [
@@ -58,6 +60,9 @@ import { AccountModule } from './modules/account/account.module';
 
     // Payment (Stripe, PayPal)
     PaymentModule,
+
+    // Card Provider (Multi-provider adapter)
+    CardProviderModule,
 
     // Deposit Notification & Audit (legacy)
     DepositNotificationModule,
@@ -101,6 +106,7 @@ import { AccountModule } from './modules/account/account.module';
     SecurityModule,
     SupportModule,
     AccountModule,
+    CardholderModule,
   ],
 })
 export class AppModule implements OnModuleInit {

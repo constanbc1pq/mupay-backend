@@ -22,3 +22,11 @@ export * from './deposit-limit.entity';
 export * from './deposit-audit-log.entity';
 export * from './user-notification.entity';
 export * from './message-template.entity';
+
+// U卡服务商集成实体
+export * from './card-provider.entity';
+export * from './card-product.entity';
+export * from './cardholder.entity';
+export * from './card-transaction.entity';
+export * from './issuing-balance.entity';
+export * from './issuing-balance-transaction.entity';

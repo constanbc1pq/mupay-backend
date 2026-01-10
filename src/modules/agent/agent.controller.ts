@@ -70,4 +70,16 @@ export class AgentController {
   async getRanking(@CurrentUser() user: User) {
     return this.agentService.getRanking(user.id);
   }
+
+  @Get('policies')
+  @ApiOperation({ summary: '可用代理政策列表' })
+  async getPolicies() {
+    return this.agentService.getPolicies();
+  }
+
+  @Get('earnings/by-provider')
+  @ApiOperation({ summary: '按服务商分组的收益' })
+  async getEarningsByProvider(@CurrentUser() user: User) {
+    return this.agentService.getEarningsByProvider(user.id);
+  }
 }

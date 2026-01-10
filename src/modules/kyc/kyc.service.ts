@@ -40,6 +40,12 @@ export class KycService {
       order: { createdAt: 'DESC' },
     });
 
+    // Get approved KYC record for verified info
+    const approvedRecord = user.kycLevel > 0 ? await this.kycRepository.findOne({
+      where: { userId, status: KycStatus.APPROVED },
+      order: { createdAt: 'DESC' },
+    }) : null;
+
     return {
       level: user.kycLevel,
       status: pendingRecord ? 'pending' : (rejectedRecord ? 'rejected' : 'none'),
@@ -49,7 +55,20 @@ export class KycService {
         level: pendingRecord.level,
         createdAt: pendingRecord.createdAt,
       } : null,
+      // Include verified KYC info (masked for privacy)
+      verifiedInfo: approvedRecord ? {
+        realName: approvedRecord.realName,
+        idType: approvedRecord.idType,
+        maskedIdNumber: this.maskIdNumber(approvedRecord.idNumber),
+        verifiedAt: approvedRecord.reviewedAt,
+      } : null,
     };
+  }
+
+  private maskIdNumber(idNumber: string): string {
+    if (!idNumber || idNumber.length < 4) return '****';
+    const visibleChars = Math.min(4, Math.floor(idNumber.length / 3));
+    return idNumber.slice(0, visibleChars) + '****' + idNumber.slice(-visibleChars);
   }
 
   async submitBasicKyc(userId: string, dto: SubmitBasicKycDto) {

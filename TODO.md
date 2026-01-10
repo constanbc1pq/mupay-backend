@@ -544,6 +544,7 @@
   - [x] Level 2: 单笔 $10,000, 日 $50,000
 
 - [x] Admin KYC 审核
+  - [x] 创建 modules/admin/admin-kyc.controller.ts
   - [x] GET /api/admin/kyc/pending 待审核列表
   - [x] GET /api/admin/kyc/:id 认证详情
   - [x] POST /api/admin/kyc/:id/approve 通过认证
@@ -724,3 +725,215 @@
   - [ ] POST /api/admin/announcements 创建系统公告
   - [ ] GET /api/admin/announcements 公告列表
   - [ ] PATCH /api/admin/announcements/:id 更新公告
+
+## Phase 24: U卡服务商集成系统
+
+> 说明: 聚合多家第三方 U 卡服务商，首家接入 UQPAY。对接具体 API 时需向用户索要详细文档
+
+### 24.1 服务商抽象层
+
+- [x] 服务商接口抽象
+  - [x] 创建 services/card-provider/card-provider.interface.ts
+  - [x] 定义 ICardProvider 统一接口
+  - [x] 定义 Cardholder 相关方法 (create/list/update/retrieve)
+  - [x] 定义 Card 相关方法 (create/list/update/retrieve/activate/freeze/unfreeze)
+  - [x] 定义 Card 敏感信息方法 (retrieveSensitiveDetails)
+  - [x] 定义 Card 资金操作方法 (recharge/withdraw)
+  - [x] 定义 Transaction 相关方法 (list/retrieve)
+  - [x] 定义 Product 相关方法 (listProducts)
+  - [x] 定义 Balance 相关方法 (retrieve/listTransactions)
+  - [x] 定义 Transfer 相关方法 (create/retrieve)
+
+- [x] 服务商管理器
+  - [x] 创建 services/card-provider/card-provider.module.ts
+  - [x] 创建 services/card-provider/card-provider-manager.service.ts
+  - [x] 实现服务商注册机制
+  - [x] 实现服务商路由选择 (按产品/按余额/按状态)
+  - [x] 实现故障转移逻辑
+
+### 24.2 UQPAY 服务商适配器
+
+- [x] UQPAY Adapter
+  - [x] 创建 services/card-provider/providers/uqpay/uqpay.adapter.ts
+  - [x] 实现 ICardProvider 接口
+  - [x] 配置 UQPAY API 密钥 (环境变量)
+  - [x] 实现请求签名逻辑
+  - [x] 实现响应解析逻辑
+  - [x] 实现错误码映射
+
+- [x] UQPAY Cardholder API
+  - [x] Create Cardholder 创建持卡人
+  - [x] List Cardholders 持卡人列表
+  - [x] Update Cardholder 更新持卡人
+  - [x] Retrieve Cardholder 查询持卡人
+
+- [x] UQPAY Card API
+  - [x] Create Card 创建卡片
+  - [x] List Cards 卡片列表
+  - [x] Update Card 更新卡片
+  - [x] Retrieve Card 查询卡片
+  - [x] Update Card Status 更新卡片状态
+  - [x] Retrieve Sensitive Card Details 查询敏感信息
+  - [x] Card Recharge 卡片充值
+  - [x] Card Withdraw 卡片提现
+  - [x] Retrieve Card Order 查询卡片订单
+  - [x] Activate Card 激活卡片
+  - [x] Assign Card 分配卡片
+  - [x] Reset Card PIN 重置 PIN 码
+
+- [x] UQPAY Transaction API
+  - [x] List Cards Transactions 卡片交易列表
+  - [x] Retrieve Cards Transaction 查询交易详情
+
+- [x] UQPAY Product API
+  - [x] List Card Products 卡产品列表
+
+- [x] UQPAY Balance API
+  - [x] Retrieve Issuing Balance 查询发行余额
+  - [x] List Issuing Balances 发行余额列表
+  - [x] List Issuing Balances Transactions 发行余额交易
+
+- [x] UQPAY Transfer API
+  - [x] Create Issuing Transfer 创建发行转账
+  - [x] Retrieve Issuing Transfer 查询发行转账
+
+### 24.3 数据库实体重构
+
+- [x] CardProvider 服务商实体
+  - [x] 创建 database/entities/card-provider.entity.ts
+  - [x] 字段: id/code/name/status/apiBaseUrl
+  - [x] 字段: apiKey/apiSecret (加密存储)
+  - [x] 字段: openFeeRate/rechargeFeeRate/withdrawFeeRate/monthlyFeeRate
+  - [x] 字段: minRecharge/maxRecharge/minWithdraw/maxWithdraw
+  - [x] 字段: supportedCardForms/supportedCardModes
+  - [x] 字段: webhookSecret/createdAt/updatedAt
+
+- [x] CardProduct 卡产品实体
+  - [x] 创建 database/entities/card-product.entity.ts
+  - [x] 字段: id/providerId/providerProductId/name/description
+  - [x] 字段: cardForm (virtual/physical)/cardMode (single/share)
+  - [x] 字段: cardBrand (visa/mastercard)/currency
+  - [x] 字段: openFee/monthlyFee/rechargeRate/withdrawRate
+  - [x] 字段: minDeposit/dailyLimit/monthlyLimit
+  - [x] 字段: regions (支持地区 JSON)/status
+  - [x] 字段: createdAt/updatedAt
+
+- [x] Cardholder 持卡人实体
+  - [x] 创建 database/entities/cardholder.entity.ts
+  - [x] 字段: id/userId/providerId/providerCardholderId
+  - [x] 字段: firstName/lastName/email/phone
+  - [x] 字段: idType/idNumber/nationality/dateOfBirth
+  - [x] 字段: address/city/state/country/postalCode
+  - [x] 字段: kycStatus/kycLevel/providerMetadata (JSON)
+  - [x] 字段: createdAt/updatedAt
+
+- [x] Card 实体重构
+  - [x] 扩展 database/entities/card.entity.ts
+  - [x] 新增字段: providerId/providerCardId/productId/cardholderId
+  - [x] 新增字段: cardForm/cardMode/cardBrand
+  - [x] 新增字段: activatedAt/lastSyncAt/providerMetadata (JSON)
+  - [x] 保留原有字段兼容 (cardNumber/expiryDate/cvv/balance 等)
+
+- [x] CardTransaction 卡交易实体
+  - [x] 创建 database/entities/card-transaction.entity.ts
+  - [x] 字段: id/cardId/providerId/providerTransactionId
+  - [x] 字段: type (purchase/refund/atm/fee)/amount/currency
+  - [x] 字段: merchantName/merchantCategory/merchantCountry
+  - [x] 字段: status/declineReason/transactionTime
+  - [x] 字段: originalAmount/originalCurrency/exchangeRate
+  - [x] 字段: providerMetadata (JSON)/createdAt
+
+- [x] IssuingBalance 发行余额实体
+  - [x] 创建 database/entities/issuing-balance.entity.ts
+  - [x] 字段: id/providerId/currency/balance/frozenBalance
+  - [x] 字段: lastSyncAt/createdAt/updatedAt
+
+- [x] IssuingBalanceTransaction 发行余额交易实体
+  - [x] 创建 database/entities/issuing-balance-transaction.entity.ts
+  - [x] 字段: id/providerId/providerTransactionId
+  - [x] 字段: type (deposit/withdraw/card_load/card_unload/fee)
+  - [x] 字段: amount/currency/balance/remark
+  - [x] 字段: relatedCardId/relatedUserId
+  - [x] 字段: providerMetadata (JSON)/transactionTime/createdAt
+
+### 24.4 持卡人模块
+
+- [x] Cardholder 模块
+  - [x] 创建 modules/cardholder/cardholder.module.ts
+  - [x] 创建 modules/cardholder/cardholder.controller.ts
+  - [x] 创建 modules/cardholder/cardholder.service.ts
+
+- [x] Cardholder 接口
+  - [x] GET /api/cardholder 获取当前用户持卡人信息
+  - [x] GET /api/cardholder/list 获取用户所有持卡人列表
+  - [x] POST /api/cardholder 创建持卡人 (需 KYC L1)
+  - [x] PATCH /api/cardholder/:id 更新持卡人信息
+  - [x] POST /api/cardholder/:id/sync 同步持卡人信息
+  - [x] GET /api/cardholder/check 检查是否可创建持卡人
+
+### 24.5 卡片模块重构
+
+- [ ] Card 模块重构
+  - [ ] 重构 modules/card/card.service.ts 调用服务商接口
+  - [ ] 实现开卡前持卡人检查
+  - [ ] 实现发行余额检查与扣减
+  - [ ] 实现卡信息同步逻辑
+
+- [ ] Card 接口调整
+  - [ ] GET /api/card/providers 可用服务商列表
+  - [ ] GET /api/card/products 卡产品列表 (支持按服务商筛选)
+  - [ ] POST /api/card/apply 申请新卡 (增加 providerId/productId 参数)
+  - [ ] GET /api/card/:id/transactions 卡交易记录
+  - [ ] POST /api/card/:id/withdraw 卡余额提现到钱包
+  - [ ] POST /api/card/:id/pin/reset 重置 PIN 码
+
+### 24.6 数据同步服务
+
+- [ ] 同步任务
+  - [ ] 创建 jobs/card-sync.job.ts
+  - [ ] 实现卡片状态同步 (每小时)
+  - [ ] 实现卡片余额同步 (每次操作后)
+  - [ ] 实现卡交易记录同步 (每5分钟)
+  - [ ] 实现发行余额同步 (每30分钟)
+
+- [ ] Webhook 处理
+  - [ ] 创建 modules/card/card-webhook.controller.ts
+  - [ ] POST /api/webhook/card/:provider 服务商回调入口
+  - [ ] 实现交易通知处理
+  - [ ] 实现卡状态变更处理
+  - [ ] 实现充值/提现完成处理
+
+### 24.7 发行余额管理 (Admin API)
+
+- [ ] Admin 发行余额接口
+  - [ ] GET /api/admin/issuing/providers 服务商列表
+  - [ ] GET /api/admin/issuing/providers/:id 服务商详情
+  - [ ] PATCH /api/admin/issuing/providers/:id 更新服务商配置
+  - [ ] GET /api/admin/issuing/balances 各服务商发行余额列表
+  - [ ] GET /api/admin/issuing/balances/:providerId 指定服务商余额详情
+  - [ ] GET /api/admin/issuing/balances/:providerId/transactions 余额交易记录
+  - [ ] POST /api/admin/issuing/sync/:providerId 手动触发同步
+
+### 24.8 代理商政策扩展
+
+- [ ] AgentPolicy 代理商政策实体
+  - [ ] 创建 database/entities/agent-policy.entity.ts
+  - [ ] 字段: id/providerId/name/description
+  - [ ] 字段: cardOpenCommissionRate/monthlyFeeCommissionRate
+  - [ ] 字段: rechargeCommissionRate/transactionCommissionRate
+  - [ ] 字段: level1Rate/level2Rate
+  - [ ] 字段: minPayout/status
+  - [ ] 字段: createdAt/updatedAt
+
+- [ ] Agent 模块扩展
+  - [ ] 扩展 AgentEarning 实体增加 providerId 字段
+  - [ ] 扩展佣金计算支持多服务商政策
+  - [ ] GET /api/agent/policies 可用代理政策列表
+  - [ ] GET /api/agent/earnings/by-provider 按服务商分组的收益
+
+### 24.9 种子数据
+
+- [ ] 服务商种子数据
+  - [ ] 创建 database/seeds/card-provider.seed.ts
+  - [ ] 添加 UQPAY 服务商配置
+  - [ ] 添加默认代理政策

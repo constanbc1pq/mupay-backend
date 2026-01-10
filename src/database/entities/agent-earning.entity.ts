@@ -5,9 +5,11 @@ import {
   CreateDateColumn,
   ManyToOne,
   JoinColumn,
+  Index,
 } from 'typeorm';
 import { Agent } from './agent.entity';
 import { User } from './user.entity';
+import { CardProvider } from './card-provider.entity';
 
 export enum EarningType {
   CARD_OPEN = 'card_open',
@@ -49,6 +51,14 @@ export class AgentEarning {
 
   @Column({ type: 'uuid', nullable: true })
   relatedOrderId: string;
+
+  @Column({ type: 'uuid', nullable: true, comment: '关联服务商ID' })
+  @Index()
+  providerId: string;
+
+  @ManyToOne(() => CardProvider, { nullable: true })
+  @JoinColumn({ name: 'providerId' })
+  provider: CardProvider;
 
   @CreateDateColumn()
   createdAt: Date;

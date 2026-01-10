@@ -1,6 +1,5 @@
 import { Module, OnModuleInit } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ScheduleModule } from '@nestjs/schedule';
 import { DepositController, WebhookController } from './deposit.controller';
 import { DepositService } from './deposit.service';
 import { DepositLimitService } from './deposit-limit.service';
@@ -14,7 +13,7 @@ import { DepositJob } from '../../jobs/deposit.job';
 
 @Module({
   imports: [
-    ScheduleModule.forRoot(),
+    // ScheduleModule.forRoot() is registered in CardProviderModule (global)
     TypeOrmModule.forFeature([DepositOrder, DepositAddress, DepositLimit, Transaction, Wallet, User]),
   ],
   controllers: [DepositController, WebhookController],

@@ -3,6 +3,7 @@ import { seedAdmin } from './admin.seed';
 import { seedConfigData } from './config-data.seed';
 import { seedFaq } from './faq.seed';
 import { seedMessageTemplates } from './message-template.seed';
+import { seedCardProviders } from './card-provider.seed';
 
 const dataSource = new DataSource({
   type: 'mysql',
@@ -24,6 +25,7 @@ async function runSeeds() {
     await seedConfigData(dataSource);
     await seedFaq(dataSource);
     await seedMessageTemplates(dataSource);
+    await seedCardProviders(dataSource);
 
     console.log('All seeds completed');
   } catch (error) {

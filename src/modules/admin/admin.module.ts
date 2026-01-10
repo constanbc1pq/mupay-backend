@@ -5,8 +5,12 @@ import { ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AdminController } from './admin.controller';
 import { AdminDepositController } from './admin-deposit.controller';
+import { AdminIssuingController } from './admin-issuing.controller';
+import { AdminKycController } from './admin-kyc.controller';
 import { AdminService } from './admin.service';
 import { AdminDepositService } from './admin-deposit.service';
+import { AdminIssuingService } from './admin-issuing.service';
+import { KycModule } from '../kyc/kyc.module';
 import { AdminJwtStrategy } from './strategies/admin-jwt.strategy';
 import { AdminUser } from '@database/entities/admin-user.entity';
 import { User } from '@database/entities/user.entity';
@@ -16,6 +20,11 @@ import { DepositOrder } from '@database/entities/deposit-order.entity';
 import { DepositAddress } from '@database/entities/deposit-address.entity';
 import { DepositAuditLog } from '@database/entities/deposit-audit-log.entity';
 import { Wallet } from '@database/entities/wallet.entity';
+import { CardProvider } from '@database/entities/card-provider.entity';
+import { CardProduct } from '@database/entities/card-product.entity';
+import { Card } from '@database/entities/card.entity';
+import { IssuingBalance } from '@database/entities/issuing-balance.entity';
+import { IssuingBalanceTransaction } from '@database/entities/issuing-balance-transaction.entity';
 
 @Module({
   imports: [
@@ -29,6 +38,7 @@ import { Wallet } from '@database/entities/wallet.entity';
         },
       }),
     }),
+    KycModule,
     TypeOrmModule.forFeature([
       AdminUser,
       User,
@@ -38,10 +48,15 @@ import { Wallet } from '@database/entities/wallet.entity';
       DepositAddress,
       DepositAuditLog,
       Wallet,
+      CardProvider,
+      CardProduct,
+      Card,
+      IssuingBalance,
+      IssuingBalanceTransaction,
     ]),
   ],
-  controllers: [AdminController, AdminDepositController],
-  providers: [AdminService, AdminDepositService, AdminJwtStrategy],
+  controllers: [AdminController, AdminDepositController, AdminIssuingController, AdminKycController],
+  providers: [AdminService, AdminDepositService, AdminIssuingService, AdminJwtStrategy],
   exports: [AdminService],
 })
 export class AdminModule {}
